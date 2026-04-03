@@ -38,11 +38,10 @@ const KOKORO_VOICES = [
   { id: 'bm_george', name: 'George (UK Male - Mature)' }
 ];
 
-// FIX 1: Explicitly bypass strict Framer Motion object typing for string-based easings
+// Explicitly bypass strict Framer Motion object typing for string-based easings
 const floatAnimation: any = { y: [0, -6, 0], transition: { duration: 4, repeat: Infinity, ease: "easeInOut" } };
 
 // --- ECHOMARK SVG LOGO COMPONENT ---
-// FIX 2: Explicitly type the component props
 const EchoMarkLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
   <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
@@ -297,7 +296,7 @@ export default function App() {
     if (!audioCtxRef.current) return;
     const buffer = audioCtxRef.current.createBuffer(1, audioData.length, sampleRate);
     
-    // FIX 3: Safely cast the incoming buffer to strictly satisfy AudioBuffer bounds
+  
     buffer.copyToChannel(audioData as any, 0);
     
     const source = audioCtxRef.current.createBufferSource();
@@ -381,7 +380,6 @@ export default function App() {
   const handlePdfMouseUp = () => setIsDraggingPdf(false);
 
   // --- FILE ROUTING & TRACKING ---
-  // FIX 4: Prefix unused `_name` to satisfy the TS compiler, and properly deduce File properties safely
   const loadNewPdf = async (file: File | Blob, _name?: string, existingId?: string) => {
     let fileId = existingId;
     let fileEntry: StoredPDF;
@@ -546,7 +544,7 @@ export default function App() {
       const pdfBytes = await pdfDoc.save();
       const link = document.createElement('a');
       
-      // FIX 5: Safely cast the exported byte array to avoid arbitrary browser Blob typing constraints
+      //Safely cast the exported byte array to avoid arbitrary browser Blob typing constraints
       link.href = URL.createObjectURL(new Blob([pdfBytes as any], { type: 'application/pdf' }));
       
       link.download = `EchoMark_${rawPdfFile instanceof File ? rawPdfFile.name : 'Document.pdf'}`;
@@ -555,7 +553,7 @@ export default function App() {
     } catch (error) { console.error("Export failed:", error); }
   };
 
-  // FIX 6: Explicitly set return type to CSSProperties for React styles
+  // Explicitly set return type to CSSProperties for React styles
   const getThemeStyles = (): React.CSSProperties => {
     if (readingTheme === 'sepia') return { filter: 'sepia(0.6) contrast(0.9) brightness(0.9) hue-rotate(-15deg)' };
     if (readingTheme === 'dark') return { filter: 'invert(0.95) hue-rotate(180deg) contrast(0.9) brightness(0.85)' };

@@ -7,7 +7,7 @@ html, body {
   scroll-behavior: smooth;
 }
 
-/* Slick Gradient Scrollbar */
+/*Gradient Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
