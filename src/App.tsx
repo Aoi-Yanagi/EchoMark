@@ -43,24 +43,33 @@ const floatAnimation = { y: [0, -6, 0], transition: { duration: 4, repeat: Infin
 const EchoMarkLogo = ({ className = "w-12 h-12" }) => (
   <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
-      <linearGradient id="gradE" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#00E5FF" />
-        <stop offset="100%" stopColor="#2979FF" />
+      <linearGradient id="gradE" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#00F5FF" />
+        <stop offset="100%" stopColor="#0044FF" />
       </linearGradient>
-      <linearGradient id="gradM" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#D500F9" />
-        <stop offset="100%" stopColor="#6A1B9A" />
+      <linearGradient id="gradM" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#FF00FF" />
+        <stop offset="100%" stopColor="#5500FF" />
       </linearGradient>
       <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
         <feGaussianBlur stdDeviation="3" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
     </defs>
-    <rect width="100" height="100" rx="24" fill="#0B0F19" />
-    <path d="M22 60 A 20 20 0 0 1 22 40" stroke="#00E5FF" strokeWidth="4" strokeLinecap="round" filter="url(#glow)"/>
-    <path d="M14 68 A 30 30 0 0 1 14 32" stroke="#00E5FF" strokeWidth="4" strokeLinecap="round" opacity="0.3"/>
-    <path d="M 46 35 L 35 35 L 35 65 L 48 65 M 35 50 L 45 50" stroke="url(#gradE)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M 50 65 L 50 35 L 64 50 L 78 35 L 78 65" stroke="url(#gradM)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+    
+    <rect width="100" height="100" rx="22" fill="#0A0D14" />
+    
+    <g stroke="#00F5FF" fill="none" strokeLinecap="round">
+      <path d="M 28 42 A 10 10 0 0 0 28 58" strokeWidth="4" filter="url(#glow)"/>
+      <path d="M 20 35 A 18 18 0 0 0 20 65" strokeWidth="3" opacity="0.5"/>
+      <path d="M 12 28 A 26 26 0 0 0 12 72" strokeWidth="2" opacity="0.2"/>
+    </g>
+
+    <path d="M 48 32 L 38 32 C 35 32 33 34 33 37 L 33 63 C 33 66 35 68 38 68 L 48 68" 
+          stroke="url(#gradE)" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M 33 50 L 44 50" stroke="url(#gradE)" strokeWidth="13" strokeLinecap="round" />
+    <path d="M 48 68 L 48 32 L 63 52 L 78 32 L 78 68" 
+          stroke="url(#gradM)" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
