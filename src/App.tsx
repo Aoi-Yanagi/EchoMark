@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, BookOpen, Volume2, Search, Highlighter, Menu, X, ChevronLeft, ChevronRight, Download, XCircle, Undo2, Redo2, Palette, AlertCircle, Trash2, ZoomIn, ZoomOut, Hand, Cpu, Play, Pause, Square, FileText, Copy, Check, Moon, Sun, Coffee, Info } from 'lucide-react';
@@ -37,10 +38,12 @@ const KOKORO_VOICES = [
   { id: 'bm_george', name: 'George (UK Male - Mature)' }
 ];
 
-const floatAnimation = { y: [0, -6, 0], transition: { duration: 4, repeat: Infinity, ease: "easeInOut" } };
+// FIX 1: Explicitly bypass strict Framer Motion object typing for string-based easings
+const floatAnimation: any = { y: [0, -6, 0], transition: { duration: 4, repeat: Infinity, ease: "easeInOut" } };
 
 // --- ECHOMARK SVG LOGO COMPONENT ---
-const EchoMarkLogo = ({ className = "w-12 h-12" }) => (
+// FIX 2: Explicitly type the component props
+const EchoMarkLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
   <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
       <linearGradient id="gradE" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -293,7 +296,10 @@ export default function App() {
   const scheduleAudioChunk = (audioData: Float32Array, sampleRate: number) => {
     if (!audioCtxRef.current) return;
     const buffer = audioCtxRef.current.createBuffer(1, audioData.length, sampleRate);
-    buffer.copyToChannel(audioData, 0);
+    
+    // FIX 3: Safely cast the incoming buffer to strictly satisfy AudioBuffer bounds
+    buffer.copyToChannel(audioData as any, 0);
+    
     const source = audioCtxRef.current.createBufferSource();
     source.buffer = buffer;
     
@@ -375,18 +381,21 @@ export default function App() {
   const handlePdfMouseUp = () => setIsDraggingPdf(false);
 
   // --- FILE ROUTING & TRACKING ---
-  const loadNewPdf = async (file: File | Blob, name: string = "Document", existingId?: string) => {
+  // FIX 4: Prefix unused `_name` to satisfy the TS compiler, and properly deduce File properties safely
+  const loadNewPdf = async (file: File | Blob, _name?: string, existingId?: string) => {
     let fileId = existingId;
     let fileEntry: StoredPDF;
 
+    const fileName = file instanceof File ? file.name : (_name || "Document");
+
     if (!fileId && file instanceof File) {
-      const existing = library.find(p => p.name === file.name && p.file.size === file.size);
+      const existing = library.find(p => p.name === fileName && p.file.size === file.size);
       if (existing) {
         fileId = existing.id;
         fileEntry = { ...existing, lastSeen: Date.now() };
       } else {
         fileId = `pdf_${Date.now()}`;
-        fileEntry = { id: fileId, name: file.name, file, date: Date.now(), lastSeen: Date.now() };
+        fileEntry = { id: fileId, name: fileName, file, date: Date.now(), lastSeen: Date.now() };
       }
     } else if (fileId) {
       const existing = library.find(p => p.id === fileId);
@@ -408,7 +417,11 @@ export default function App() {
 
   const attemptFileLoad = (file: File | Blob, name?: string, id?: string) => {
     if (file instanceof File && file.type !== "application/pdf") { alert("Only PDF files are supported!"); return; }
-    if (pdfUrl) setPendingFile({ file, name, id }); else loadNewPdf(file, name, id);
+    
+    // Safely extract name regardless of whether it's a raw Blob or proper File object
+    const finalName = name || (file instanceof File ? file.name : "Document");
+    if (pdfUrl) setPendingFile({ file, name: finalName, id }); 
+    else loadNewPdf(file, finalName, id);
   };
 
   const deleteFromLibrary = async (id: string, e: React.MouseEvent) => {
@@ -430,7 +443,7 @@ export default function App() {
   };
 
   const triggerBubbles = () => {
-    const newParticles = Array.from({ length: 15 }).map((_, i) => ({
+    const newParticles: Particle[] = Array.from({ length: 15 }).map((_, i) => ({
       id: Date.now() + i, x: (Math.random() - 0.5) * 200, y: -(Math.random() * 150 + 50), 
       size: Math.random() * 8 + 4, delay: Math.random() * 0.2, duration: Math.random() * 0.5 + 0.5
     }));
@@ -530,15 +543,20 @@ export default function App() {
           x: hl.relativeLeft, y: height - hl.relativeTop - hl.height, width: hl.width, height: hl.height, color: hl.color.pdf, opacity: 0.4,
         });
       });
+      const pdfBytes = await pdfDoc.save();
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(new Blob([await pdfDoc.save()], { type: 'application/pdf' }));
+      
+      // FIX 5: Safely cast the exported byte array to avoid arbitrary browser Blob typing constraints
+      link.href = URL.createObjectURL(new Blob([pdfBytes as any], { type: 'application/pdf' }));
+      
       link.download = `EchoMark_${rawPdfFile instanceof File ? rawPdfFile.name : 'Document.pdf'}`;
       link.click();
       setHasUnsavedChanges(false); 
     } catch (error) { console.error("Export failed:", error); }
   };
 
-  const getThemeStyles = () => {
+  // FIX 6: Explicitly set return type to CSSProperties for React styles
+  const getThemeStyles = (): React.CSSProperties => {
     if (readingTheme === 'sepia') return { filter: 'sepia(0.6) contrast(0.9) brightness(0.9) hue-rotate(-15deg)' };
     if (readingTheme === 'dark') return { filter: 'invert(0.95) hue-rotate(180deg) contrast(0.9) brightness(0.85)' };
     return {};
@@ -550,33 +568,22 @@ export default function App() {
       <AnimatePresence>
         {showWelcome && (
           <div className="fixed inset-0 z-[999] flex flex-col items-center justify-center pointer-events-none overflow-hidden">
-            
-            {/* STITCHED / ZIPPER BACKGROUND SLICES */}
-            {/* We use 10 slices of 11% width to ensure a 1% overlap, preventing 1px gap lines */}
             {[...Array(10)].map((_, i) => (
               <motion.div
                 key={i}
                 initial={{ y: 0 }}
                 exit={{ 
-                  // Alternates sliding UP and DOWN for the "stitched" effect
                   y: i % 2 === 0 ? "-100%" : "100%", 
-                  transition: { 
-                    duration: 0.8, 
-                    ease: [0.85, 0, 0.15, 1], // Cinematic exponential ease
-                    delay: i * 0.04 // Slight staggered ripple effect
-                  } 
+                  transition: { duration: 0.8, ease: [0.85, 0, 0.15, 1], delay: i * 0.04 } 
                 }}
                 className="absolute h-full bg-[#0B0F19]"
                 style={{ width: `11%`, left: `${i * 10}%` }}
               />
             ))}
 
-            {/* BRANDING CONTENT */}
             <motion.div 
               className="relative z-10 flex flex-col items-center"
-              initial={{ scale: 0.9, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }} 
-              // Logo pops forward and blurs out just before the stitches unzip
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 1.2, filter: "blur(10px)", opacity: 0, transition: { duration: 0.4, ease: "easeIn" } }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             >
@@ -594,7 +601,6 @@ export default function App() {
                 Initializing Neural Audio Workspace
               </motion.p>
             </motion.div>
-
           </div>
         )}
       </AnimatePresence>
@@ -770,7 +776,6 @@ export default function App() {
                  }
                }}
                onMouseDown={handlePdfMouseDown} onMouseMove={handlePdfMouseMove} onMouseLeave={handlePdfMouseUp} 
-               // ECHOMARK CUSTOM CURSOR APPLIED HERE
                className={`w-full max-w-5xl bg-white shadow-2xl rounded-xl relative overflow-auto transition-all duration-500 pdf-cursor-container ${isPanning ? (isDraggingPdf ? 'cursor-grabbing' : 'cursor-grab') : 'echo-cursor'} ${readingTheme === 'dark' ? 'border-gray-800 shadow-[0_0_40px_rgba(0,0,0,0.5)]' : 'border-gray-200'}`} 
                style={{ height: 'calc(100vh - 160px)' }}
              >
