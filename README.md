@@ -38,4 +38,4 @@ An ultra-low latency, local-first PDF reader featuring an integrated, streaming 
 1. Clone the repository:
    ```bash
    git clone [https://github.com/yourusername/reader-pro.git](https://github.com/yourusername/reader-pro.git)
-   cd reader-pro
+   cd EchoMark
