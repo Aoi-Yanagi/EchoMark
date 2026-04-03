@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+/* -------------------------------------------
+   ECHOMARK CUSTOM SCROLLBARS & SMOOTH SCROLL 
+--------------------------------------------- */
+html, body {
+  scroll-behavior: smooth;
+}
+
+/* Slick Gradient Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #00E5FF, #D500F9);
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #00B8D4, #AA00FF);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* -------------------------------------------
+   CUSTOM TEXT SELECTION (CYAN/PURPLE TINT)
+--------------------------------------------- */
+::selection {
+  background: rgba(213, 0, 249, 0.3);
+  color: inherit;
+}
+
+/* -------------------------------------------
+   ECHOMARK CUSTOM CROSSHAIR CURSOR FOR PDFs
+--------------------------------------------- */
+.echo-cursor {
+  /* A sleek, minimal cyan crosshair/ring cursor encoded directly in CSS */
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="%2300E5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/></svg>') 14 14, auto;
+}
+
+.echo-cursor:active {
+  /* Shrinks slightly when you click to highlight text */
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23D500F9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v2"/><path d="M12 19v2"/><path d="M3 12h2"/><path d="M19 12h2"/></svg>') 12 12, auto;
+}
