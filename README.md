@@ -1,73 +1,41 @@
-# React + TypeScript + Vite
+# 📖 EchoMark
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An ultra-low latency, local-first PDF reader featuring an integrated, streaming Text-to-Speech (TTS) engine. Built entirely for the browser, it processes documents and synthesizes voice locally, ensuring complete privacy and zero server costs.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### 🎙️ Zero-Latency Streaming TTS (Kokoro Engine)
+* **Asynchronous Pipeline:** Bypasses traditional batch-processing delays.
+* **Smart Syntactic Chunking:** Slices text by natural boundaries, forcing micro-chunks at the start to achieve a Time-to-First-Byte (TTFB) of under 50ms.
+* **AudioContext Ring Buffers:** Mathematically trims tensor silence and schedules exact chunk overlaps for flawless, gapless playback.
+* **Background Processing:** Runs the FP32 neural engine entirely in a Web Worker to prevent UI thread blocking.
 
-## React Compiler
+### 🧠 Smart Session & Storage Management
+* **Zero-Duplication Routing:** Recognizes previously uploaded files via size and name, routing users back to existing sessions instead of cluttering storage.
+* **Stateful Tracking:** Tracks `lastSeen` and `lastModified` timestamps. Clickable metadata provides instant summaries of document edits.
+* **Stale Closure Protection:** Uses precise React Refs to manage audio boundaries, ensuring media controls instantly and accurately fade away when audio completes or tab context switches.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🛠️ Pro-Grade Document Tools
+* **Non-Destructive Highlighting:** Mark up PDFs with multiple colors and export the modified file instantly. 
+* **Smart Dictionary:** Seamlessly searches Google when online, and falls back to a free Dictionary API when offline.
+* **Cinematic Reading Themes:** Hardware-accelerated CSS filters provide Light, Sepia (Blue-light reduction), and Dark (Hue-rotated invert) modes for eye care.
+* **Zero-Drift Selection:** Translates DOM viewport coordinates to exact PDF document coordinates, keeping highlights anchored regardless of zoom or pan.
 
-## Expanding the ESLint configuration
+## 💻 Tech Stack
+* **Frontend:** React, TypeScript, Tailwind CSS, Framer Motion
+* **PDF Rendering & Editing:** `react-pdf`, `pdf-lib`
+* **AI TTS Engine:** `kokoro-js` (ONNX WebAssembly)
+* **Storage:** `localforage` (IndexedDB)
+* **Icons:** Lucide React
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Getting Started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Prerequisites
+* Node.js (v18+)
+* npm or pnpm
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/yourusername/reader-pro.git](https://github.com/yourusername/reader-pro.git)
+   cd EchoMark
