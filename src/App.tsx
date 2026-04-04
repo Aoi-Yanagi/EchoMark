@@ -460,10 +460,14 @@ export default function App() {
     setReadingSelection(activeTextSelection); 
     readingSelectionRef.current = activeTextSelection; 
     
-    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') audioCtxRef.current = new window.AudioContext({ sampleRate: 24000 });
-    else audioCtxRef.current.resume();
-    nextStartTimeRef.current = audioCtxRef.current.currentTime;
-    isGenerationCompleteRef.current = false;
+   if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+      audioCtxRef.current = new window.AudioContext({ 
+        sampleRate: 24000,
+        latencyHint: 'interactive' // Forces hardware-level ultra-low latency
+      });
+    } else {
+      audioCtxRef.current.resume();
+    }
 
     activeGenerationIdRef.current++;
     workerRef.current.postMessage({ chunks: TextChunker.optimizeForStreaming(activeTextSelection.text), voiceId: selectedVoiceId, generationId: activeGenerationIdRef.current });
