@@ -530,27 +530,46 @@ export default function App() {
   const undo = () => setHistoryStep(s => Math.max(0, s - 1));
   const redo = () => setHistoryStep(s => Math.min(history.length - 1, s + 1));
 
-  const downloadModifiedPdf = async () => {
+ const downloadModifiedPdf = async () => {
     if (!rawPdfFile) return;
     try {
       const pdfDoc = await PDFDocument.load(await rawPdfFile.arrayBuffer());
       const pages = pdfDoc.getPages();
-      const { height } = pages[pageNumber - 1].getSize();
+      const currentPage = pages[pageNumber - 1];
+      
+      // Get the true internal dimensions of the PDF document
+      const { width: pdfWidth, height: pdfHeight } = currentPage.getSize();
+
+      // Calculate the math ratio between your screen width and the PDF's true width
+      const scaleRatio = pdfWidth / containerWidth;
+
       currentHighlights.forEach(hl => {
-        pages[pageNumber - 1].drawRectangle({
-          x: hl.relativeLeft, y: height - hl.relativeTop - hl.height, width: hl.width, height: hl.height, color: hl.color.pdf, opacity: 0.4,
+        currentPage.drawRectangle({
+          // Scale the DOM X/Y coordinates to match the exact PDF internal points
+          x: hl.relativeLeft * scaleRatio, 
+          
+          // PDF origin (0,0) is bottom-left, DOM origin is top-left. We flip the Y axis here.
+          y: pdfHeight - ((hl.relativeTop + hl.height) * scaleRatio), 
+          
+          width: hl.width * scaleRatio, 
+          height: hl.height * scaleRatio, 
+          color: hl.color.pdf, 
+          opacity: 0.4,
         });
       });
+
       const pdfBytes = await pdfDoc.save();
       const link = document.createElement('a');
       
-      //Safely cast the exported byte array to avoid arbitrary browser Blob typing constraints
+      // Safely cast the exported byte array
       link.href = URL.createObjectURL(new Blob([pdfBytes as any], { type: 'application/pdf' }));
-      
       link.download = `EchoMark_${rawPdfFile instanceof File ? rawPdfFile.name : 'Document.pdf'}`;
       link.click();
+      
       setHasUnsavedChanges(false); 
-    } catch (error) { console.error("Export failed:", error); }
+    } catch (error) { 
+      console.error("Export failed:", error); 
+    }
   };
 
   // Explicitly set return type to CSSProperties for React styles
@@ -741,7 +760,7 @@ export default function App() {
           {playbackState !== 'idle' && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-10 left-8 md:bottom-12 md:left-12 z-50 flex items-center justify-center gap-5 bg-[#0B0F19] shadow-[0_10px_30px_rgba(213,0,249,0.3)] px-6 py-3 rounded-full border border-purple-500/30"
+                            className="fixed bottom-24 left-1/2 -translate-x-1/2 md:bottom-12 md:translate-x-0 md:left-12 z-50 flex items-center justify-center gap-5 bg-[#0B0F19] shadow-[0_10px_30px_rgba(213,0,249,0.3)] px-6 py-3 rounded-full border border-purple-500/30"
             >
               {playbackState === 'playing' ? (
                 <button onClick={pauseReading} className="flex items-center justify-center text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"><Pause fill="currentColor" size={20} /></button>
@@ -767,6 +786,8 @@ export default function App() {
                ref={pdfWrapperRef} 
                onTouchStart={handleTouchStart} 
                onTouchEnd={handleTouchEnd}
+               onContextMenu={(e) => e.preventDefault()} 
+
                onMouseDownCapture={() => {
                  if (!isPanning) {
                    if (playbackStateRef.current !== 'idle') stopReading();
@@ -774,7 +795,7 @@ export default function App() {
                  }
                }}
                onMouseDown={handlePdfMouseDown} onMouseMove={handlePdfMouseMove} onMouseLeave={handlePdfMouseUp} 
-               className={`w-full max-w-5xl bg-white shadow-2xl rounded-xl relative overflow-auto transition-all duration-500 pdf-cursor-container ${isPanning ? (isDraggingPdf ? 'cursor-grabbing' : 'cursor-grab') : 'echo-cursor'} ${readingTheme === 'dark' ? 'border-gray-800 shadow-[0_0_40px_rgba(0,0,0,0.5)]' : 'border-gray-200'}`} 
+                              className={`w-full max-w-5xl bg-white shadow-2xl rounded-xl relative overflow-auto transition-all duration-500 pdf-cursor-container [-webkit-touch-callout:none] ${isPanning ? (isDraggingPdf ? 'cursor-grabbing' : 'cursor-grab') : 'echo-cursor'} ${readingTheme === 'dark' ? 'border-gray-800 shadow-[0_0_40px_rgba(0,0,0,0.5)]' : 'border-gray-200'}`} 
                style={{ height: 'calc(100vh - 160px)' }}
              >
                <div ref={pageContainerRef} className="relative mx-auto transition-all duration-500" style={{ width: containerWidth * zoom, ...getThemeStyles() }}>
@@ -849,32 +870,33 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* BOTTOM PAGINATION TOOLBAR */}
-          <motion.div initial={{ y: 100 }} animate={{ y: 0 }} transition={{ delay: 0.2, type: "spring", stiffness: 120 }} className="fixed bottom-6 md:bottom-8 z-40">
-            <motion.div animate={floatAnimation} className={`${readingTheme === 'dark' ? 'bg-[#151B2B]/90 border-gray-800 text-gray-300' : 'bg-white/90 border-gray-200 text-gray-800'} backdrop-blur-md shadow-2xl border rounded-full px-4 py-2.5 md:px-6 md:py-3 flex items-center gap-3`}>
+            {/* BOTTOM PAGINATION TOOLBAR */}
+         <motion.div initial={{ y: 100 }} animate={{ y: 0 }} transition={{ delay: 0.2, type: "spring", stiffness: 120 }} className="fixed bottom-6 md:bottom-8 z-40 w-full px-2 md:px-4 flex justify-center pointer-events-none">
+            <motion.div animate={floatAnimation} className={`${readingTheme === 'dark' ? 'bg-[#151B2B]/90 border-gray-800 text-gray-300' : 'bg-white/90 border-gray-200 text-gray-800'} backdrop-blur-md shadow-2xl border rounded-full px-3 py-2 md:px-6 md:py-3 flex items-center gap-2 md:gap-3 pointer-events-auto max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}>
               {pdfUrl && (
                 <>
-                  <div className={`flex items-center gap-1 md:gap-2 border-r pr-3 ${readingTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className={`flex items-center gap-1 md:gap-2 border-r pr-2 md:pr-3 shrink-0 ${readingTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                     <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} className="p-1.5 hover:bg-gray-500/20 rounded-full cursor-pointer transition"><ZoomOut size={18} /></button>
-                    <span className="text-xs md:text-sm font-semibold w-10 text-center opacity-70">{Math.round(zoom * 100)}%</span>
+                                        <span className="text-xs md:text-sm font-semibold w-9 md:w-10 text-center opacity-70">{Math.round(zoom * 100)}%</span>
                     <button onClick={() => setZoom(z => Math.min(z + 0.25, 3.0))} className="p-1.5 hover:bg-gray-500/20 rounded-full cursor-pointer transition"><ZoomIn size={18} /></button>
-                    <button onClick={() => {setIsPanning(!isPanning); setSelectionBox(null);}} className={`p-1.5 rounded-full cursor-pointer transition ml-1 ${isPanning ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-500/20'}`} title="Pan Tool"><Hand size={18} /></button>
+                    <button onClick={() => {setIsPanning(!isPanning); setSelectionBox(null);}} className={`p-1.5 rounded-full cursor-pointer transition ml-0 md:ml-1 ${isPanning ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-500/20'}`} title="Pan Tool"><Hand size={18} /></button>
                   </div>
-                  <div className={`flex items-center gap-1 border-r pr-3 ${readingTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className={`flex items-center gap-1 border-r pr-2 md:pr-3 shrink-0 ${readingTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                     <button onClick={undo} disabled={historyStep === 0} className="p-1.5 hover:bg-gray-500/20 rounded-full disabled:opacity-30 cursor-pointer"><Undo2 size={18} /></button>
                     <button onClick={redo} disabled={historyStep === history.length - 1} className="p-1.5 hover:bg-gray-500/20 rounded-full disabled:opacity-30 cursor-pointer"><Redo2 size={18} /></button>
                   </div>
-                  <div className={`flex items-center gap-1 border-r pr-3 ${readingTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className={`flex items-center gap-1 border-r pr-2 md:pr-3 shrink-0 ${readingTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                     <button onClick={() => setPageNumber(p => Math.max(p - 1, 1))} className="p-1 hover:bg-gray-500/20 rounded-full cursor-pointer"><ChevronLeft size={20} /></button>
                     <span className="text-xs md:text-sm font-semibold w-8 md:w-12 text-center opacity-70">{pageNumber}/{numPages}</span>
                     <button onClick={() => setPageNumber(p => Math.min(p + 1, numPages || 1))} className="p-1 hover:bg-gray-500/20 rounded-full cursor-pointer"><ChevronRight size={20} /></button>
                   </div>
-                  <button onClick={downloadModifiedPdf} className="flex items-center gap-1 hover:bg-gray-500/20 text-green-500 font-semibold px-2 py-1 rounded-full cursor-pointer transition-colors border-r border-gray-700 pr-3"><Download size={18} /> <span className="hidden md:inline">Export</span></button>
+                  <button onClick={downloadModifiedPdf} className={`flex items-center gap-1.5 hover:bg-gray-500/20 text-green-500 font-semibold px-2 py-1.5 rounded-full cursor-pointer transition-colors border-r ${readingTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'} pr-2 md:pr-3 shrink-0`}><Download size={18} /> <span className="hidden sm:inline">Export</span></button>
                 </>
               )}
-              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="application/pdf" className="hidden" />
-              <button onClick={() => fileInputRef.current?.click()} className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg" title="Upload PDF"><Upload size={18} /></button>
+                <div className="shrink-0 flex items-center">
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="application/pdf" className="hidden" />
+                <button onClick={() => fileInputRef.current?.click()} className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg" title="Upload PDF"><Upload size={18} /></button>
+              </div>
             </motion.div>
           </motion.div>
 
@@ -883,8 +905,7 @@ export default function App() {
             const currentDoc = library.find(d => d.id === currentFileId);
             if (!currentDoc) return null;
             return (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end px-3 py-2 rounded-xl border shadow-sm backdrop-blur-md pointer-events-auto ${readingTheme === 'dark' ? 'bg-[#151B2B]/90 border-gray-800 text-gray-300' : 'bg-white/90 border-gray-200 text-gray-800'}`}>
-                <span className="font-semibold text-xs mb-1 truncate max-w-[150px] md:max-w-[200px] flex items-center gap-1.5"><FileText size={12} className="text-cyan-500" /> {currentDoc.name}</span>
+<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end px-3 py-2 rounded-xl border shadow-sm backdrop-blur-md pointer-events-auto ${readingTheme === 'dark' ? 'bg-[#151B2B]/90 border-gray-800 text-gray-300' : 'bg-white/90 border-gray-200 text-gray-800'}`}>                <span className="font-semibold text-xs mb-1 truncate max-w-[150px] md:max-w-[200px] flex items-center gap-1.5"><FileText size={12} className="text-cyan-500" /> {currentDoc.name}</span>
                 <span className="text-[10px] opacity-60">Seen: {new Date(currentDoc.lastSeen || currentDoc.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                 {currentDoc.lastModified && (
                   <span 
